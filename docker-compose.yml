@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  chronostream-api:
+    build: .
+    container_name: chronostream-api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  chronostream-demo:
+    build: .
+    container_name: chronostream-demo
+    command: streamlit run demo/streamlit_app.py --server.port=8501 --server.address=0.0.0.0 --server.headless=true
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    depends_on:
+      chronostream-api:
+        condition: service_healthy
+    restart: unless-stopped
